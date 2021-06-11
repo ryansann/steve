@@ -22,7 +22,7 @@ type AccessStore struct {
 	groups *policyRuleIndex
 	cache  *cache.LRUExpireCache
 	// mtx guards userKeys
-	mtx      *sync.RWMutex
+	mtx      *sync.Mutex
 	userKeys map[string]string
 }
 
@@ -43,6 +43,7 @@ func NewAccessStore(ctx context.Context, cacheResults bool, rbac v1.Interface) *
 	}
 	if cacheResults {
 		as.cache = cache.NewLRUExpireCache(cacheSize)
+		as.mtx = &sync.Mutex{}
 		as.userKeys = make(map[string]string, cacheSize)
 	}
 	return as
