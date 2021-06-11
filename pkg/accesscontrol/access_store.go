@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"sort"
+	"sync"
 	"time"
 
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
@@ -20,12 +21,19 @@ type AccessStore struct {
 	users  *policyRuleIndex
 	groups *policyRuleIndex
 	cache  *cache.LRUExpireCache
+	// mtx guards userKeys
+	mtx      *sync.RWMutex
+	userKeys map[string]string
 }
 
 type roleKey struct {
 	namespace string
 	name      string
 }
+
+const (
+	cacheSize = 50
+)
 
 func NewAccessStore(ctx context.Context, cacheResults bool, rbac v1.Interface) *AccessStore {
 	revisions := newRoleRevision(ctx, rbac)
@@ -34,7 +42,8 @@ func NewAccessStore(ctx context.Context, cacheResults bool, rbac v1.Interface) *
 		groups: newPolicyRuleIndex(false, revisions, rbac),
 	}
 	if cacheResults {
-		as.cache = cache.NewLRUExpireCache(50)
+		as.cache = cache.NewLRUExpireCache(cacheSize)
+		as.userKeys = make(map[string]string, cacheSize)
 	}
 	return as
 }
@@ -57,6 +66,12 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 
 	if l.cache != nil {
 		result.ID = cacheKey
+		l.mtx.Lock()
+		defer l.mtx.Unlock()
+		if prevKey, ok := l.userKeys[user.GetUID()]; ok && prevKey != cacheKey {
+			l.cache.Remove(prevKey)
+		}
+		l.userKeys[user.GetUID()] = cacheKey
 		l.cache.Add(cacheKey, result, 24*time.Hour)
 	}
 
