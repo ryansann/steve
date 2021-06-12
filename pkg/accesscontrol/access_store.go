@@ -69,10 +69,10 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		result.ID = cacheKey
 		l.mtx.Lock()
 		defer l.mtx.Unlock()
-		if prevKey, ok := l.userKeys[user.GetUID()]; ok && prevKey != cacheKey {
+		if prevKey, ok := l.userKeys[user.GetName()]; ok && prevKey != cacheKey {
 			l.cache.Remove(prevKey)
 		}
-		l.userKeys[user.GetUID()] = cacheKey
+		l.userKeys[user.GetName()] = cacheKey
 		l.cache.Add(cacheKey, result, 24*time.Hour)
 	}
 
