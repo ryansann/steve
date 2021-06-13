@@ -49,7 +49,8 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		val, ok := l.cache.Get(cacheKey)
 		if ok {
 			as, _ := val.(*AccessSet)
-			fmt.Printf("cache hit, hash: %s\n", getHash(as))
+			hash := getHash(as)
+			fmt.Printf("cache hit, hash: %s\n", hash)
 			return as
 		}
 	}
@@ -59,7 +60,8 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		result.Merge(l.groups.get(group))
 	}
 
-	fmt.Printf("hash: %s\n", getHash(result))
+	hash := getHash(result)
+	fmt.Printf("hash: %s\n", hash)
 
 	if l.cache != nil {
 		result.ID = cacheKey
