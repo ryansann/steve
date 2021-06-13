@@ -4,7 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
@@ -46,6 +49,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		val, ok := l.cache.Get(cacheKey)
 		if ok {
 			as, _ := val.(*AccessSet)
+			fmt.Printf("cache hit, hash: %s\n", getHash(as))
 			return as
 		}
 	}
@@ -54,6 +58,8 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 	for _, group := range user.GetGroups() {
 		result.Merge(l.groups.get(group))
 	}
+
+	fmt.Printf("hash: %s\n", getHash(result))
 
 	if l.cache != nil {
 		result.ID = cacheKey
@@ -77,5 +83,28 @@ func (l *AccessStore) CacheKey(user user.Info) string {
 		l.groups.addRolesToHash(d, group)
 	}
 
+	return hex.EncodeToString(d.Sum(nil))
+}
+
+func getHash(a *AccessSet) string {
+	var keys []string
+	var accesses []string
+	for gvr, as := range a.set {
+		s := strings.Join([]string{gvr.gr.Group, gvr.verb, gvr.gr.Resource}, "")
+		keys = append(keys, s)
+		for access, granted := range as {
+			astr := strings.Join([]string{access.Namespace, access.ResourceName, strconv.FormatBool(granted)}, "")
+			accesses = append(accesses, astr)
+		}
+	}
+	sort.Strings(keys)
+	sort.Strings(accesses)
+
+	ks := strings.Join(keys, "")
+	acs := strings.Join(accesses, "")
+
+	d := sha256.New()
+	d.Write([]byte(ks))
+	d.Write([]byte(acs))
 	return hex.EncodeToString(d.Sum(nil))
 }
