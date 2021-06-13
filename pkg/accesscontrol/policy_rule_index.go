@@ -75,13 +75,15 @@ func (p *policyRuleIndex) roleBindingBySubject(rb *rbacv1.RoleBinding) (result [
 var null = []byte{'\x00'}
 
 func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) {
-	for _, crb := range p.getClusterRoleBindings(subjectName) {
+	clusterRoleBindings := p.getClusterRoleBindings(subjectName)
+	for _, crb := range clusterRoleBindings {
 		digest.Write([]byte(crb.RoleRef.Name))
 		digest.Write([]byte(p.revisions.roleRevision("", crb.RoleRef.Name)))
 		digest.Write(null)
 	}
 
-	for _, rb := range p.getRoleBindings(subjectName) {
+	roleBindings := p.getRoleBindings(subjectName)
+	for _, rb := range roleBindings {
 		switch rb.RoleRef.Kind {
 		case "Role":
 			digest.Write([]byte(rb.RoleRef.Name))
