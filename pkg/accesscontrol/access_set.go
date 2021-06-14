@@ -11,7 +11,7 @@ import (
 
 type AccessSet struct {
 	ID  string
-	set map[key]resourceAccessSet
+	Set map[key]resourceAccessSet
 }
 
 type resourceAccessSet map[Access]bool
@@ -23,7 +23,7 @@ type key struct {
 
 func (a *AccessSet) Namespaces() (result []string) {
 	set := map[string]bool{}
-	for k, as := range a.set {
+	for k, as := range a.Set {
 		if k.verb != "get" && k.verb != "list" {
 			continue
 		}
@@ -42,14 +42,14 @@ func (a *AccessSet) Namespaces() (result []string) {
 }
 
 func (a *AccessSet) Merge(right *AccessSet) {
-	for k, accessMap := range right.set {
-		m, ok := a.set[k]
+	for k, accessMap := range right.Set {
+		m, ok := a.Set[k]
 		if !ok {
 			m = map[Access]bool{}
-			if a.set == nil {
-				a.set = map[key]resourceAccessSet{}
+			if a.Set == nil {
+				a.Set = map[key]resourceAccessSet{}
 			}
-			a.set[k] = m
+			a.Set[k] = m
 		}
 
 		for k, v := range accessMap {
@@ -62,7 +62,7 @@ func (a AccessSet) Grants(verb string, gr schema.GroupResource, namespace, name 
 	for _, v := range []string{All, verb} {
 		for _, g := range []string{All, gr.Group} {
 			for _, r := range []string{All, gr.Resource} {
-				for k := range a.set[key{
+				for k := range a.Set[key{
 					verb: v,
 					gr: schema.GroupResource{
 						Group:    g,
@@ -85,7 +85,7 @@ func (a AccessSet) AccessListFor(verb string, gr schema.GroupResource) (result A
 	for _, v := range []string{All, verb} {
 		for _, g := range []string{All, gr.Group} {
 			for _, r := range []string{All, gr.Resource} {
-				for k := range a.set[key{
+				for k := range a.Set[key{
 					verb: v,
 					gr: schema.GroupResource{
 						Group:    g,
@@ -106,17 +106,17 @@ func (a AccessSet) AccessListFor(verb string, gr schema.GroupResource) (result A
 }
 
 func (a *AccessSet) Add(verb string, gr schema.GroupResource, access Access) {
-	if a.set == nil {
-		a.set = map[key]resourceAccessSet{}
+	if a.Set == nil {
+		a.Set = map[key]resourceAccessSet{}
 	}
 
 	k := key{verb: verb, gr: gr}
-	if m, ok := a.set[k]; ok {
+	if m, ok := a.Set[k]; ok {
 		m[access] = true
 	} else {
 		m = map[Access]bool{}
 		m[access] = true
-		a.set[k] = m
+		a.Set[k] = m
 	}
 }
 
