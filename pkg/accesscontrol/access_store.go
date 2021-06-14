@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -51,6 +52,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 			as, _ := val.(*AccessSet)
 			hash := getHash(as)
 			fmt.Printf("cache hit, hash: %s\n", hash)
+			printAccessSet(as)
 			return as
 		}
 	}
@@ -62,6 +64,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 
 	hash := getHash(result)
 	fmt.Printf("hash: %s\n", hash)
+	printAccessSet(result)
 
 	if l.cache != nil {
 		result.ID = cacheKey
@@ -109,4 +112,9 @@ func getHash(a *AccessSet) string {
 	d.Write([]byte(ks))
 	d.Write([]byte(acs))
 	return hex.EncodeToString(d.Sum(nil))
+}
+
+func printAccessSet(as *AccessSet) {
+	asbytes, _ := json.MarshalIndent(as, "", "  ")
+	fmt.Println(string(asbytes))
 }
