@@ -89,11 +89,13 @@ func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) {
 			digest.Write([]byte(rb.RoleRef.Name))
 			digest.Write([]byte(rb.Namespace))
 			digest.Write([]byte(p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)))
+			digest.Write([]byte("Role"))
 			digest.Write(null)
 		case "ClusterRole":
 			digest.Write([]byte(rb.RoleRef.Name))
 			digest.Write([]byte(rb.Namespace))
 			digest.Write([]byte(p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)))
+			digest.Write([]byte("ClusterRole"))
 			digest.Write(null)
 		}
 	}
