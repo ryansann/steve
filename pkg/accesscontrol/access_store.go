@@ -94,7 +94,7 @@ func (l *AccessStore) CacheKey(user user.Info) string {
 func getHash(a *AccessSet) string {
 	var keys []string
 	var accesses []string
-	for gvr, as := range a.set {
+	for gvr, as := range a.Set {
 		s := strings.Join([]string{gvr.gr.Group, gvr.verb, gvr.gr.Resource}, "")
 		keys = append(keys, s)
 		for access, granted := range as {
