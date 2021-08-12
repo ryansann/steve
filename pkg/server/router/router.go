@@ -1,7 +1,9 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/rancher/apiserver/pkg/urlbuilder"
@@ -20,7 +22,7 @@ func Routes(h Handlers) http.Handler {
 	m := mux.NewRouter()
 	m.UseEncodedPath()
 	m.StrictSlash(true)
-	m.Use(urlbuilder.RedirectRewrite)
+	m.Use(rejectIfBlackListed, urlbuilder.RedirectRewrite)
 
 	m.Path("/").Handler(h.APIRoot).HeadersRegexp("Accepts", ".*json.*")
 	m.Path("/{name:v1}").Handler(h.APIRoot)
@@ -41,4 +43,47 @@ func Routes(h Handlers) http.Handler {
 	m.NotFoundHandler = h.Next
 
 	return m
+}
+
+var blackListTypes = []string{
+	"management.cattle.io.authconfig",
+	"management.cattle.io.catalogtemplate",
+	"management.cattle.io.catalog",
+	"management.cattle.io.cluster",
+	"management.cattle.io.clusterroletemplatebinding",
+	"management.cattle.io.feature",
+	"management.cattle.io.group",
+	"management.cattle.io.kontainerdriver",
+	"management.cattle.io.node",
+	"management.cattle.io.nodedriver",
+	"management.cattle.io.nodepool",
+	"management.cattle.io.nodetemplate",
+	"management.cattle.io.project",
+	"management.cattle.io.projectroletemplatebinding",
+	"management.cattle.io.roletemplate",
+	"management.cattle.io.setting",
+	"management.cattle.io.user",
+	"management.cattle.io.token",
+	"management.cattle.io.globalrole",
+	"management.cattle.io.globalrolebinding",
+	"management.cattle.io.podsecuritypolicytemplate",
+}
+
+// rejectIfBlackListed is a middleware that rejects requests that have a blacklisted type in their url path
+func rejectIfBlackListed(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		typ, ok := params["type"]
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+		for _, t := range blackListTypes {
+			if strings.Contains(typ, t) {
+				http.Error(w, fmt.Sprintf("routes with type: %s are blacklisted", t), http.StatusBadRequest)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
