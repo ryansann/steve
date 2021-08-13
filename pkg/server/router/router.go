@@ -74,7 +74,11 @@ func rejectIfBlackListed(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		typ, ok := params["type"]
-		if !ok {
+		if !ok { // admit if there is no type param in the path
+			next.ServeHTTP(w, r)
+			return
+		}
+		if r.Method == http.MethodGet { // admit get requests
 			next.ServeHTTP(w, r)
 			return
 		}
