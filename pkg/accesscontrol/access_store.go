@@ -9,9 +9,8 @@ import (
 	"sort"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apiserver/pkg/authentication/user"
 )
@@ -50,7 +49,8 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		val, ok := l.cache.Get(cacheKey)
 		if ok {
 			as, _ := val.(*AccessSet)
-			prettyPrintAccessSet(user, as)
+			hash := getAccessSetHash(user, as)
+			fmt.Printf("CACHE HIT | user: %s, time: %v, hash: %s\n", user.GetName(), time.Now().Unix(), hash)
 			return as
 		}
 	}
@@ -65,7 +65,8 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		l.cache.Add(cacheKey, result, 24*time.Hour)
 	}
 
-	prettyPrintAccessSet(user, result)
+	hash := getAccessSetHash(user, result)
+	fmt.Printf("CACHE MISS | user: %s, time: %v, hash: %s\n", user.GetName(), time.Now().Unix(), hash)
 	return result
 }
 
@@ -102,7 +103,7 @@ type SetKey struct {
 	GR   schema.GroupResource `json:"groupResource"`
 }
 
-func prettyPrintAccessSet(user user.Info, s *AccessSet) string {
+func getAccessSetHash(user user.Info, s *AccessSet) string {
 	as := &AccessSetPretty{
 		ID:  s.ID,
 		Set: []SetEntry{},
@@ -136,8 +137,8 @@ func prettyPrintAccessSet(user user.Info, s *AccessSet) string {
 	if err != nil {
 		fmt.Println(err)
 	}
-	out := string(byts)
-	fmt.Printf("user: %s, access set:\n", user.GetName())
-	fmt.Printf(string(byts))
-	return out
+	d := sha256.New()
+	d.Write(byts)
+	hash := hex.EncodeToString(d.Sum(nil))
+	return hash
 }
