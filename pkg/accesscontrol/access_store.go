@@ -97,7 +97,7 @@ type SetEntry struct {
 	ResourceAccessSet ResourceAccessSet `json:"resourceAccessSet"`
 }
 
-type ResourceAccessSet map[Access]bool
+type ResourceAccessSet []Access
 
 type SetKey struct {
 	Verb string               `json:"verb"`
@@ -114,13 +114,18 @@ func prettyPrintAccessSet(s *AccessSet) {
 			Verb: k.verb,
 			GR:   k.gr,
 		}
-		spretty := make(ResourceAccessSet, len(v))
-		for k2, v2 := range v {
-			spretty[k2] = v2
+		var l []Access
+		for k2 := range v {
+			l = append(l, k2)
 		}
+		sort.Slice(l, func(i, j int) bool {
+			k1 := l[i].Namespace + l[j].ResourceName
+			k2 := l[j].Namespace + l[j].ResourceName
+			return k1 < k2
+		})
 		setEntry := SetEntry{
 			Key:               setKey,
-			ResourceAccessSet: spretty,
+			ResourceAccessSet: l,
 		}
 		as.Set = append(as.Set, setEntry)
 	}
