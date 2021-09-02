@@ -1,13 +1,11 @@
 package accesscontrol
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"sort"
 	"time"
 
@@ -105,7 +103,7 @@ type SetKey struct {
 }
 
 func prettyPrintAccessSet(s *AccessSet) string {
-	as := AccessSetPretty{
+	as := &AccessSetPretty{
 		ID:  s.ID,
 		Set: []SetEntry{},
 	}
@@ -134,16 +132,10 @@ func prettyPrintAccessSet(s *AccessSet) string {
 		k2 := as.Set[j].Key.Verb + as.Set[j].Key.GR.Group + as.Set[j].Key.GR.Resource
 		return k1 < k2
 	})
-	buf := bytes.NewBuffer(nil)
-	err := dump(buf, as)
+	byts, err := json.Marshal(as)
 	if err != nil {
 		fmt.Println(err)
 	}
-	out := buf.String()
+	out := string(byts)
 	return out
-}
-
-func dump(w io.Writer, val interface{}) error {
-	je := json.NewEncoder(w)
-	return je.Encode(val)
 }
