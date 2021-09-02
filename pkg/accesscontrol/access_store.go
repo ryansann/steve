@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"time"
 
@@ -127,9 +129,13 @@ func prettyPrintAccessSet(s *AccessSet) {
 		k2 := as.Set[j].Key.Verb + as.Set[j].Key.GR.Group + as.Set[j].Key.GR.Resource
 		return k1 < k2
 	})
-	bs, err := json.Marshal(as)
+	err := dump(os.Stdout, as)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(bs))
+}
+
+func dump(w io.Writer, val interface{}) error {
+	je := json.NewEncoder(w)
+	return je.Encode(val)
 }
