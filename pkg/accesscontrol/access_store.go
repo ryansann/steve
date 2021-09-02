@@ -50,7 +50,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		val, ok := l.cache.Get(cacheKey)
 		if ok {
 			as, _ := val.(*AccessSet)
-			prettyPrintAccessSet(as)
+			prettyPrintAccessSet(user, as)
 			return as
 		}
 	}
@@ -65,7 +65,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 		l.cache.Add(cacheKey, result, 24*time.Hour)
 	}
 
-	prettyPrintAccessSet(result)
+	prettyPrintAccessSet(user, result)
 	return result
 }
 
