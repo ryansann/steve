@@ -92,8 +92,10 @@ type AccessSetPretty struct {
 
 type SetEntry struct {
 	Key               SetKey            `json:"key"`
-	ResourceAccessSet resourceAccessSet `json:"resourceAccessSet"`
+	ResourceAccessSet ResourceAccessSet `json:"resourceAccessSet"`
 }
+
+type ResourceAccessSet map[Access]bool
 
 type SetKey struct {
 	Verb string               `json:"verb"`
@@ -110,9 +112,13 @@ func prettyPrintAccessSet(s *AccessSet) {
 			Verb: k.verb,
 			GR:   k.gr,
 		}
+		spretty := make(ResourceAccessSet, len(v))
+		for k2, v2 := range v {
+			spretty[k2] = v2
+		}
 		setEntry := SetEntry{
 			Key:               setKey,
-			ResourceAccessSet: v,
+			ResourceAccessSet: spretty,
 		}
 		as.Set = append(as.Set, setEntry)
 	}
