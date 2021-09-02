@@ -163,6 +163,13 @@ func (p *policyRuleIndex) getClusterRoleBindings(subjectName string) []*rbacv1.C
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Name < result[j].Name
 	})
+
+	var crbNames []string
+	for _, crb := range result {
+		crbNames = append(crbNames, crb.Name)
+	}
+	fmt.Printf("subject: %s, crbs: %v\n", subjectName, crbNames)
+
 	return result
 }
 
@@ -177,7 +184,7 @@ func (p *policyRuleIndex) getRoleBindings(subjectName string) []*rbacv1.RoleBind
 
 	var rbNames []string
 	for _, rb := range result {
-		rbNames = append(rbNames, rb.Namespace+rb.Name)
+		rbNames = append(rbNames, rb.Namespace+"/"+rb.Name)
 	}
 	fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
 
