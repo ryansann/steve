@@ -68,9 +68,11 @@ func (l *AccessStore) CacheKey(user user.Info) string {
 
 	l.users.addRolesToHash(d, user.GetName())
 
-	userGroups := user.GetGroups()
-	sort.Strings(userGroups)
-	for _, group := range userGroups {
+	groupBase := user.GetGroups()
+	groups := make([]string, len(groupBase))
+	copy(groups, groupBase)
+	sort.Strings(groups)
+	for _, group := range groups {
 		l.groups.addRolesToHash(d, group)
 	}
 
