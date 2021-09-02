@@ -102,7 +102,7 @@ type SetKey struct {
 	GR   schema.GroupResource `json:"groupResource"`
 }
 
-func prettyPrintAccessSet(s *AccessSet) string {
+func prettyPrintAccessSet(user user.Info, s *AccessSet) string {
 	as := &AccessSetPretty{
 		ID:  s.ID,
 		Set: []SetEntry{},
@@ -137,5 +137,7 @@ func prettyPrintAccessSet(s *AccessSet) string {
 		fmt.Println(err)
 	}
 	out := string(byts)
+	fmt.Printf("user: %s, access set:\n", user.GetName())
+	fmt.Printf(string(byts))
 	return out
 }
