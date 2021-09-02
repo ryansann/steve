@@ -52,8 +52,6 @@ func (a *AccessSet) Merge(right *AccessSet) {
 			a.set[k] = m
 		}
 
-		m.merge(accessMap)
-
 		for k, v := range accessMap {
 			m[k] = v
 		}
