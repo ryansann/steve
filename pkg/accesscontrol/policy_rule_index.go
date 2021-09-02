@@ -174,5 +174,12 @@ func (p *policyRuleIndex) getRoleBindings(subjectName string) []*rbacv1.RoleBind
 	sort.Slice(result, func(i, j int) bool {
 		return string(result[i].UID) < string(result[j].UID)
 	})
+
+	var rbNames []string
+	for _, rb := range result {
+		rbNames = append(rbNames, rb.Namespace+rb.Name)
+	}
+	fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
+
 	return result
 }
