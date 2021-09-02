@@ -16,6 +16,15 @@ type AccessSet struct {
 
 type resourceAccessSet map[Access]bool
 
+func (s resourceAccessSet) merge(right resourceAccessSet) {
+	for rightKey, rightVal := range right {
+		_, ok := s[rightKey]
+		if !ok {
+			s[rightKey] = rightVal
+		}
+	}
+}
+
 type key struct {
 	verb string
 	gr   schema.GroupResource
@@ -52,9 +61,10 @@ func (a *AccessSet) Merge(right *AccessSet) {
 			a.set[k] = m
 		}
 
-		for k, v := range accessMap {
-			m[k] = v
-		}
+		m.merge(accessMap)
+		//for k, v := range accessMap {
+		//	m[k] = v
+		//}
 	}
 }
 
