@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash"
 	"sort"
+	"strings"
 
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -168,7 +169,9 @@ func (p *policyRuleIndex) getClusterRoleBindings(subjectName string) []*rbacv1.C
 	for _, crb := range result {
 		crbNames = append(crbNames, crb.Name)
 	}
-	fmt.Printf("subject: %s, crbs: %v\n", subjectName, crbNames)
+	if strings.HasPrefix(subjectName, "u-") {
+		fmt.Printf("subject: %s, crbs: %v\n", subjectName, crbNames)
+	}
 
 	return result
 }
@@ -186,7 +189,9 @@ func (p *policyRuleIndex) getRoleBindings(subjectName string) []*rbacv1.RoleBind
 	for _, rb := range result {
 		rbNames = append(rbNames, rb.Namespace+"/"+rb.Name)
 	}
-	fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
+	if strings.HasPrefix(subjectName, "u-") {
+		fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
+	}
 
 	return result
 }

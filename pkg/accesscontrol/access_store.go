@@ -1,13 +1,13 @@
 package accesscontrol
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"time"
 
@@ -104,7 +104,7 @@ type SetKey struct {
 	GR   schema.GroupResource `json:"groupResource"`
 }
 
-func prettyPrintAccessSet(s *AccessSet) {
+func prettyPrintAccessSet(s *AccessSet) string {
 	as := AccessSetPretty{
 		ID:  s.ID,
 		Set: []SetEntry{},
@@ -134,10 +134,13 @@ func prettyPrintAccessSet(s *AccessSet) {
 		k2 := as.Set[j].Key.Verb + as.Set[j].Key.GR.Group + as.Set[j].Key.GR.Resource
 		return k1 < k2
 	})
-	err := dump(os.Stdout, as)
+	buf := bytes.NewBuffer(nil)
+	err := dump(buf, as)
 	if err != nil {
 		fmt.Println(err)
 	}
+	out := buf.String()
+	return out
 }
 
 func dump(w io.Writer, val interface{}) error {
