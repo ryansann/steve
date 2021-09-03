@@ -76,7 +76,7 @@ var null = []byte{'\x00'}
 
 func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) (roleInfo []string, crbNames []string, rbNames []string) {
 	crbs := p.getClusterRoleBindings(subjectName)
-	for _, crb := range p.getClusterRoleBindings(subjectName) {
+	for _, crb := range crbs {
 		name := crb.RoleRef.Name
 		revision := p.revisions.roleRevision("", crb.RoleRef.Name)
 
