@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash"
 	"sort"
-	"strings"
 
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -75,27 +74,33 @@ func (p *policyRuleIndex) roleBindingBySubject(rb *rbacv1.RoleBinding) (result [
 
 var null = []byte{'\x00'}
 
-func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) {
+func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) []string {
+	var roleInfo []string
 	for _, crb := range p.getClusterRoleBindings(subjectName) {
-		digest.Write([]byte(crb.RoleRef.Name))
-		digest.Write([]byte(p.revisions.roleRevision("", crb.RoleRef.Name)))
+		name := crb.RoleRef.Name
+		revision := p.revisions.roleRevision("", crb.RoleRef.Name)
+		roleInfo = append(roleInfo, name+"/"+revision)
+		digest.Write([]byte(name))
+		digest.Write([]byte(revision))
 		digest.Write(null)
 	}
 
 	for _, rb := range p.getRoleBindings(subjectName) {
-		switch rb.RoleRef.Kind {
-		case "Role":
-			digest.Write([]byte(rb.RoleRef.Name))
-			digest.Write([]byte(rb.Namespace))
-			digest.Write([]byte(p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)))
-			digest.Write(null)
-		case "ClusterRole":
-			digest.Write([]byte(rb.RoleRef.Name))
-			digest.Write([]byte(rb.Namespace))
-			digest.Write([]byte(p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)))
-			digest.Write(null)
+		name := rb.RoleRef.Name
+		ns := rb.Namespace
+		revision := p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)
+		if ns == "" {
+			roleInfo = append(roleInfo, name+"/"+revision)
+		} else {
+			roleInfo = append(roleInfo, ns+"/"+name+"/"+revision)
 		}
+		digest.Write([]byte(name))
+		digest.Write([]byte(ns))
+		digest.Write([]byte(revision))
+		digest.Write(null)
 	}
+
+	return roleInfo
 }
 
 func (p *policyRuleIndex) get(subjectName string) *AccessSet {
@@ -164,15 +169,6 @@ func (p *policyRuleIndex) getClusterRoleBindings(subjectName string) []*rbacv1.C
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Name < result[j].Name
 	})
-
-	var crbNames []string
-	for _, crb := range result {
-		crbNames = append(crbNames, crb.Name+"/"+crb.ResourceVersion)
-	}
-	if strings.HasPrefix(subjectName, "u-") {
-		fmt.Printf("subject: %s, crbs: %v\n", subjectName, crbNames)
-	}
-
 	return result
 }
 
@@ -184,14 +180,5 @@ func (p *policyRuleIndex) getRoleBindings(subjectName string) []*rbacv1.RoleBind
 	sort.Slice(result, func(i, j int) bool {
 		return string(result[i].UID) < string(result[j].UID)
 	})
-
-	var rbNames []string
-	for _, rb := range result {
-		rbNames = append(rbNames, rb.Namespace+"/"+rb.Name+"/"+rb.ResourceVersion)
-	}
-	if strings.HasPrefix(subjectName, "u-") {
-		fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
-	}
-
 	return result
 }

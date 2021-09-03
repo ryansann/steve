@@ -73,15 +73,20 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 func (l *AccessStore) CacheKey(user user.Info) string {
 	d := sha256.New()
 
-	l.users.addRolesToHash(d, user.GetName())
+	userRoleInfo := l.users.addRolesToHash(d, user.GetName())
+	fmt.Printf("user: %s, roleInfo: %v\n", user.GetName(), userRoleInfo)
 
+	var groupRoleInfo []string
 	groupBase := user.GetGroups()
 	groups := make([]string, len(groupBase))
 	copy(groups, groupBase)
 	sort.Strings(groups)
 	for _, group := range groups {
-		l.groups.addRolesToHash(d, group)
+		ri := l.groups.addRolesToHash(d, group)
+		groupRoleInfo = append(groupRoleInfo, ri)
 	}
+
+	fmt.Printf("user: %s, groups: %v, groupRoleInfo: %v\n", user.GetName(), user.GetGroups(), groupRoleInfo)
 
 	return hex.EncodeToString(d.Sum(nil))
 }
