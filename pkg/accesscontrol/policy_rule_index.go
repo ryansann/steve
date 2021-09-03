@@ -167,7 +167,7 @@ func (p *policyRuleIndex) getClusterRoleBindings(subjectName string) []*rbacv1.C
 
 	var crbNames []string
 	for _, crb := range result {
-		crbNames = append(crbNames, crb.Name)
+		crbNames = append(crbNames, crb.Name+"/"+crb.ResourceVersion)
 	}
 	if strings.HasPrefix(subjectName, "u-") {
 		fmt.Printf("subject: %s, crbs: %v\n", subjectName, crbNames)
@@ -187,7 +187,7 @@ func (p *policyRuleIndex) getRoleBindings(subjectName string) []*rbacv1.RoleBind
 
 	var rbNames []string
 	for _, rb := range result {
-		rbNames = append(rbNames, rb.Namespace+"/"+rb.Name)
+		rbNames = append(rbNames, rb.Namespace+"/"+rb.Name+"/"+rb.ResourceVersion)
 	}
 	if strings.HasPrefix(subjectName, "u-") {
 		fmt.Printf("subject: %s, rbs: %v\n", subjectName, rbNames)
