@@ -81,7 +81,7 @@ func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) [
 		revision := p.revisions.roleRevision("", crb.RoleRef.Name)
 		roleInfo = append(roleInfo, name+"/"+revision)
 		digest.Write([]byte(name))
-		digest.Write([]byte(revision))
+		//digest.Write([]byte(revision))
 		digest.Write(null)
 	}
 
@@ -96,7 +96,7 @@ func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) [
 		}
 		digest.Write([]byte(name))
 		digest.Write([]byte(ns))
-		digest.Write([]byte(revision))
+		//digest.Write([]byte(revision))
 		digest.Write(null)
 	}
 
