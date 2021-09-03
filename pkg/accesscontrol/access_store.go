@@ -70,7 +70,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 
 	hash := getHash(result)
 	fmt.Printf("CACHE MISS | user: %s, time: %v, key: %s, hash: %s\n", user.GetName(), time.Now().Unix(), cacheKey, hash)
-	printAccessSet(user, as)
+	printAccessSet(user, result)
 	return result
 }
 
