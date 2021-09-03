@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/rbac/v1"
 	"k8s.io/apimachinery/pkg/util/cache"
@@ -67,6 +70,7 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 
 	hash := getHash(result)
 	fmt.Printf("CACHE MISS | user: %s, time: %v, key: %s, hash: %s\n", user.GetName(), time.Now().Unix(), cacheKey, hash)
+	printAccessSet(user, as)
 	return result
 }
 
@@ -112,4 +116,61 @@ func getHash(a *AccessSet) string {
 	d.Write([]byte(ks))
 	d.Write([]byte(acs))
 	return hex.EncodeToString(d.Sum(nil))
+}
+
+type AccessSetPretty struct {
+	ID  string     `json:"id"`
+	Set []SetEntry `json:"set"`
+}
+
+type SetEntry struct {
+	Key               SetKey            `json:"key"`
+	ResourceAccessSet ResourceAccessSet `json:"resourceAccessSet"`
+}
+
+type ResourceAccessSet []Access
+
+type SetKey struct {
+	Verb string               `json:"verb"`
+	GR   schema.GroupResource `json:"groupResource"`
+}
+
+func printAccessSet(user user.Info, s *AccessSet) string {
+	as := &AccessSetPretty{
+		ID:  s.ID,
+		Set: []SetEntry{},
+	}
+	for k, v := range s.set {
+		setKey := SetKey{
+			Verb: k.verb,
+			GR:   k.gr,
+		}
+		var l []Access
+		for k2 := range v {
+			l = append(l, k2)
+		}
+		sort.Slice(l, func(i, j int) bool {
+			k1 := l[i].Namespace + l[j].ResourceName
+			k2 := l[j].Namespace + l[j].ResourceName
+			return k1 < k2
+		})
+		setEntry := SetEntry{
+			Key:               setKey,
+			ResourceAccessSet: l,
+		}
+		as.Set = append(as.Set, setEntry)
+	}
+	sort.Slice(as.Set, func(i, j int) bool {
+		k1 := as.Set[i].Key.Verb + as.Set[i].Key.GR.Group + as.Set[i].Key.GR.Resource
+		k2 := as.Set[j].Key.Verb + as.Set[j].Key.GR.Group + as.Set[j].Key.GR.Resource
+		return k1 < k2
+	})
+	byts, err := json.Marshal(as)
+	if err != nil {
+		fmt.Println(err)
+	}
+	out := string(byts)
+	fmt.Printf("user: %s, access set:\n", user.GetName())
+	fmt.Printf(string(byts))
+	return out
 }
