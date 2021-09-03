@@ -24,7 +24,7 @@ type key struct {
 func (a *AccessSet) Namespaces() (result []string) {
 	set := map[string]bool{}
 	for k, as := range a.set {
-		if k.verb != "get" && k.verb != "list" {
+		if k.verb != "get" && k.verb != "list" && k.verb != All {
 			continue
 		}
 		for access := range as {
