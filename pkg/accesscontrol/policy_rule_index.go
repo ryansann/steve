@@ -74,35 +74,41 @@ func (p *policyRuleIndex) roleBindingBySubject(rb *rbacv1.RoleBinding) (result [
 
 var null = []byte{'\x00'}
 
-func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) []string {
-	var roleInfo []string
+func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) (roleInfo []string, crbNames []string, rbNames []string) {
+	crbs := p.getClusterRoleBindings(subjectName)
 	for _, crb := range p.getClusterRoleBindings(subjectName) {
 		name := crb.RoleRef.Name
 		revision := p.revisions.roleRevision("", crb.RoleRef.Name)
+
 		roleInfo = append(roleInfo, name+"/"+revision)
-		digest.Write([]byte(crb.Name))
+		crbNames = append(crbNames, crb.Name)
+
 		digest.Write([]byte(name))
 		//digest.Write([]byte(revision))
 		digest.Write(null)
 	}
 
-	for _, rb := range p.getRoleBindings(subjectName) {
+	rbs := p.getRoleBindings(subjectName)
+	for _, rb := range rbs {
 		name := rb.RoleRef.Name
 		ns := rb.Namespace
 		revision := p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)
+
 		if ns == "" {
 			roleInfo = append(roleInfo, name+"/"+revision)
 		} else {
 			roleInfo = append(roleInfo, ns+"/"+name+"/"+revision)
 		}
-		digest.Write([]byte(rb.Name))
+
+		rbNames = append(rbNames, rb.Name)
+
 		digest.Write([]byte(name))
 		digest.Write([]byte(ns))
 		//digest.Write([]byte(revision))
 		digest.Write(null)
 	}
 
-	return roleInfo
+	return
 }
 
 func (p *policyRuleIndex) get(subjectName string) *AccessSet {

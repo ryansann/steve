@@ -74,11 +74,27 @@ func (l *AccessStore) AccessFor(user user.Info) *AccessSet {
 	return result
 }
 
+type CacheKeyInfo struct {
+	Subject string    `json:"subject"`
+	User    UserInfo  `json:"user"`
+	Group   GroupInfo `json:"group"`
+}
+
+type UserInfo struct {
+	RoleInfo                []string `json:"roleInfo"`
+	ClusterRoleBindingNames []string `json:"crbNames"`
+	RoleBindingNames        []string `json:"rbNames"`
+}
+
+type GroupInfo struct {
+	Groups   []string `json:"groups"`
+	RoleInfo []string `json:"roleInfo"`
+}
+
 func (l *AccessStore) CacheKey(user user.Info) string {
 	d := sha256.New()
 
-	userRoleInfo := l.users.addRolesToHash(d, user.GetName())
-	fmt.Printf("user: %s, roleInfo: %v\n", user.GetName(), userRoleInfo)
+	userRoleInfo, crbNames, rbNames := l.users.addRolesToHash(d, user.GetName())
 
 	var groupRoleInfo []string
 	groupBase := user.GetGroups()
@@ -86,11 +102,27 @@ func (l *AccessStore) CacheKey(user user.Info) string {
 	copy(groups, groupBase)
 	sort.Strings(groups)
 	for _, group := range groups {
-		ri := l.groups.addRolesToHash(d, group)
+		ri, _, _ := l.groups.addRolesToHash(d, group)
 		groupRoleInfo = append(groupRoleInfo, ri...)
 	}
 
-	fmt.Printf("user: %s, groups: %v, groupRoleInfo: %v\n", user.GetName(), user.GetGroups(), groupRoleInfo)
+	info := &CacheKeyInfo{
+		Subject: user.GetName(),
+		User: UserInfo{
+			RoleInfo:                userRoleInfo,
+			ClusterRoleBindingNames: crbNames,
+			RoleBindingNames:        rbNames,
+		},
+		Group: GroupInfo{
+			Groups:   user.GetGroups(),
+			RoleInfo: groupRoleInfo,
+		},
+	}
+	byts, err := json.Marshal(info)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(byts))
 
 	return hex.EncodeToString(d.Sum(nil))
 }
