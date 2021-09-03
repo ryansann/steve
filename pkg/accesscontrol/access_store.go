@@ -83,7 +83,7 @@ func (l *AccessStore) CacheKey(user user.Info) string {
 	sort.Strings(groups)
 	for _, group := range groups {
 		ri := l.groups.addRolesToHash(d, group)
-		groupRoleInfo = append(groupRoleInfo, ri)
+		groupRoleInfo = append(groupRoleInfo, ri...)
 	}
 
 	fmt.Printf("user: %s, groups: %v, groupRoleInfo: %v\n", user.GetName(), user.GetGroups(), groupRoleInfo)
