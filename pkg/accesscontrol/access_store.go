@@ -181,9 +181,9 @@ func printAccessSet(user user.Info, s *AccessSet) string {
 		for k2 := range v {
 			l = append(l, k2)
 		}
-		sort.Slice(l, func(i, j int) bool {
-			k1 := l[i].Namespace + l[j].ResourceName
-			k2 := l[j].Namespace + l[j].ResourceName
+		sort.SliceStable(l, func(i, j int) bool {
+			k1 := l[i].ResourceName + l[i].Namespace
+			k2 := l[j].ResourceName + l[j].Namespace
 			return k1 < k2
 		})
 		setEntry := SetEntry{
@@ -192,7 +192,7 @@ func printAccessSet(user user.Info, s *AccessSet) string {
 		}
 		as.Set = append(as.Set, setEntry)
 	}
-	sort.Slice(as.Set, func(i, j int) bool {
+	sort.SliceStable(as.Set, func(i, j int) bool {
 		k1 := as.Set[i].Key.Verb + as.Set[i].Key.GR.Group + as.Set[i].Key.GR.Resource
 		k2 := as.Set[j].Key.Verb + as.Set[j].Key.GR.Group + as.Set[j].Key.GR.Resource
 		return k1 < k2
