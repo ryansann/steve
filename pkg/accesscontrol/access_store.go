@@ -203,6 +203,6 @@ func printAccessSet(user user.Info, s *AccessSet) string {
 	}
 	out := string(byts)
 	fmt.Printf("user: %s, access set:\n", user.GetName())
-	fmt.Printf(string(byts))
+	fmt.Printf("%s\n", string(byts))
 	return out
 }

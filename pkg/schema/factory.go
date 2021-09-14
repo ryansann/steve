@@ -29,6 +29,7 @@ func (c *Collection) Schemas(user user.Info) (*types.APISchemas, error) {
 		return schemas, nil
 	}
 
+	fmt.Printf("rebuilding schemas for subject: %s\n", user.GetName())
 	schemas, err := c.schemasForSubject(access)
 	if err != nil {
 		return nil, err
