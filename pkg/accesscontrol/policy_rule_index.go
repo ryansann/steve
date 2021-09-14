@@ -92,7 +92,14 @@ func (p *policyRuleIndex) addRolesToHash(digest hash.Hash, subjectName string) (
 	for _, rb := range rbs {
 		name := rb.RoleRef.Name
 		ns := rb.Namespace
-		revision := p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)
+
+		// RoleBindings can bind to either ClusterRoles or Roles
+		var revision string
+		if rb.RoleRef.Kind == "ClusterRole" {
+			revision = p.revisions.roleRevision("", rb.RoleRef.Name)
+		} else { // "Role"
+			revision = p.revisions.roleRevision(rb.Namespace, rb.RoleRef.Name)
+		}
 
 		if ns == "" {
 			roleInfo = append(roleInfo, name+"/"+revision)
